@@ -132,16 +132,22 @@ func NewReaderEncrypted(f io.ReaderAt, size int64, pw func() string) (*Reader, e
 		return nil, fmt.Errorf("not a PDF file: invalid header")
 	}
 	end := size
-	const endChunk = 100
+	const endChunk = 300 //Increased this from 100 to fix certain PDF end of file content
 	buf = make([]byte, endChunk)
 	f.ReadAt(buf, end-endChunk)
 	for len(buf) > 0 && buf[len(buf)-1] == '\n' || buf[len(buf)-1] == '\r' {
 		buf = buf[:len(buf)-1]
 	}
 	buf = bytes.TrimRight(buf, "\r\n\t ")
-	if !bytes.HasSuffix(buf, []byte("%%EOF")) {
+	searchEOFIndex := bytes.Index(buf, []byte("%%EOF"))
+
+	// if !bytes.HasSuffix(buf, []byte("%%EOF")) {
+	// 	return nil, fmt.Errorf("not a PDF file: missing %%%%EOF")
+	// }
+	if searchEOFIndex < 0 {
 		return nil, fmt.Errorf("not a PDF file: missing %%%%EOF")
 	}
+
 	i := findLastLine(buf, "startxref")
 	if i < 0 {
 		return nil, fmt.Errorf("malformed PDF file: missing final startxref")
