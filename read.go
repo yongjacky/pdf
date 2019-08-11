@@ -149,7 +149,7 @@ func NewReaderEncrypted(f io.ReaderAt, size int64, pw func() string) (*Reader, e
 	}
 
 	i := findLastLine(buf, "startxref")
-	fmt.Printf("return findLastLine %v\n", i)
+
 	if i < 0 {
 		return nil, fmt.Errorf("malformed PDF file: missing final startxref")
 	}
