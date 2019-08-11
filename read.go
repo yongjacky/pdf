@@ -149,6 +149,7 @@ func NewReaderEncrypted(f io.ReaderAt, size int64, pw func() string) (*Reader, e
 	}
 
 	i := findLastLine(buf, "startxref")
+	fmt.Printf("return findLastLine %v\n", i)
 	if i < 0 {
 		return nil, fmt.Errorf("malformed PDF file: missing final startxref")
 	}
@@ -436,11 +437,21 @@ func readXrefTableData(b *buffer, table []xref) ([]xref, error) {
 func findLastLine(buf []byte, s string) int {
 	bs := []byte(s)
 	max := len(buf)
+	foundFirstIndex := 0
 	for {
 		i := bytes.LastIndex(buf[:max], bs)
+		if foundFirstIndex == 0 {
+			foundFirstIndex = i
+		}
+
 		if i <= 0 || i+len(bs) >= len(buf) {
+			if foundFirstIndex > 0 { //Temporary fix for unable to find startxref in single page
+				fmt.Printf("Handled an issue that unable to find last index for this %v\n", s)
+				return foundFirstIndex
+			}
 			return -1
 		}
+
 		if (buf[i-1] == '\n' || buf[i-1] == '\r') && (buf[i+len(bs)] == '\n' || buf[i+len(bs)] == '\r') {
 			return i
 		}
